@@ -3,7 +3,7 @@
 services:
   # 1. Veritabanı Konteyneri
   db:
-    image: postgres:latest
+    image: postgres:16
     container_name: dronefleet-db
     environment:
       POSTGRES_USER: malas

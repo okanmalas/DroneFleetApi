@@ -7,4 +7,5 @@ public class Drone
     public string IpAddress { get; set; }
     public int MaxFlightTimeMinutes { get; set; }
     public bool IsActive { get; set; }
+    public bool IsDeleted { get; set; }
 }
