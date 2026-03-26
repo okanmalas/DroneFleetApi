@@ -1,0 +1,32 @@
+﻿version: '3.8'
+
+services:
+  # 1. Veritabanı Konteyneri
+  db:
+    image: postgres:latest
+    container_name: dronefleet-db
+    environment:
+      POSTGRES_USER: malas
+      POSTGRES_PASSWORD: supersecretpassword # Docker'daki Postgres şifre ister, buraya basit bir şifre koyduk
+      POSTGRES_DB: malas
+    ports:
+      - "5432:5432" # Mac'imizden bu veritabanına ulaşabilmek için portu dışarı açıyoruz
+    volumes:
+      - pgdata:/var/lib/postgresql/data # Konteyner kapansa bile verilerimiz silinmesin diye diske kaydediyoruz
+
+  # 2. .NET API Konteyneri
+  api:
+    build:
+      context: .
+      dockerfile: DroneFleetApi/Dockerfile
+    container_name: dronefleet-api
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db # API ayağa kalkmadan önce veritabanının hazır olmasını bekler
+    environment:
+      # API'mizin veritabanı konteynerini bulabilmesi için bağlantı adresini eziyoruz (Host=db yapıyoruz)
+      - ConnectionStrings__DefaultConnection=Host=db;Database=malas;Username=malas;Password=supersecretpassword;
+
+volumes:
+  pgdata:
