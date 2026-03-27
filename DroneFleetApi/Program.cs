@@ -27,18 +27,22 @@ app.Use(async (context, next) =>
     }
     catch (Exception ex)
     {
+        string logKlasoru = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
+        if (!Directory.Exists(logKlasoru))
+            Directory.CreateDirectory(logKlasoru);
+        string dosyaYolu = Path.Combine(logKlasoru, "error_logs.txt");
+        string logMetni = $"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] [HATA] URL: {context.Request.Path} | Mesaj: {ex.Message}{Environment.NewLine}";
+        await File.AppendAllTextAsync(dosyaYolu, logMetni);
         context.Response.StatusCode = 500;
-        context.Response.ContentType = "application/json";
-
+        context.Response.ContentType = "application/json"; 
         var hataCevabi = new 
         { 
-            Mesaj = "Sunucu tarafında beklenmeyen kritik bir hata oluştu.",
+            Mesaj = "Sunucu tarafında beklenmeyen kritik bir hata oluştu.", 
             HataDetayi = ex.Message 
         };
-
         await context.Response.WriteAsJsonAsync(hataCevabi);
     }
-}); //global exception handler
+}); // global error handling
 
 #endregion
 
