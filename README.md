@@ -1,83 +1,53 @@
 # Drone Fleet Management API
 
-![.NET 10.0](https://img.shields.io/badge/.NET-10.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
-![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white)
+[![.NET 10.0](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat-square&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com)
+[![C#](https://img.shields.io/badge/C%23-239120?style=flat-square&logo=c-sharp&logoColor=white)](https://learn.microsoft.com/en-us/dotnet/csharp/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![Docker](https://img.shields.io/badge/Docker-2CA5E0?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com)
 
-İHA (İnsansız Hava Aracı) filolarını ve uçuş kayıtlarını yönetmek amacıyla geliştirilmiş, katmanlı mimari ve güvenlik öncelikleri üzerine inşa edilmiş bir REST API uygulamasıdır.
+İHA filolarını ve uçuş kayıtlarını yönetmek için geliştirilmiş, katmanlı mimari üzerine inşa edilmiş bir REST API.
 
-<br>
+---
 
 ## İçindekiler
 
-- [Genel Bakış](#genel-bakış)
-- [Mimari ve Tasarım Kararları](#mimari-ve-tasarım-kararları)
+- [Mimari](#mimari)
 - [Kurulum](#kurulum)
 - [API Referansı](#api-referansı)
   - [İHA Yönetimi](#iha-yönetimi)
   - [Uçuş Kaydı Yönetimi](#uçuş-kaydı-yönetimi)
 - [Hata Yanıtları](#hata-yanıtları)
 
-<br>
-
 ---
 
-## Genel Bakış
+## Mimari
 
-Bu proje, modern .NET backend mimarisini, yazılım mühendisliği prensiplerini ve endüstri standartlarını uygulamalı olarak ele almak amacıyla geliştirilmiştir. Herhangi bir frontend uygulamasına bağlı değildir; odak noktası güvenli veri transferi, temiz katmanlı yapı ve ilişkisel veritabanı yönetimidir.
-
-| Alan | Teknoloji |
+| Karar | Yaklaşım |
 |---|---|
-| Framework & Dil | .NET 10.0 SDK, C# |
-| Veritabanı & ORM | PostgreSQL, Entity Framework Core (Code-First) |
-| Konteynerleştirme | Docker, Docker Compose |
+| **Katman Ayrımı** | Entity'ler doğrudan dışa açılmaz; DTO katmanı üzerinden iletişim kurulur |
+| **Hata Yönetimi** | Tüm istisnalar merkezi bir middleware'de yakalanır, standart JSON formatında döner |
+| **Veri Doğrulama** | DTO/Controller seviyesinde (Data Annotations) + veritabanı kısıtlamaları |
+| **Soft Delete** | Silme işlemleri `isDeleted` bayrağıyla yapılır; kayıtlar fiziksel olarak silinmez |
+| **Loglama** | Kritik hatalar sunucu tarafında `.txt` dosyasına yazılır |
 
-<br>
-
----
-
-## Mimari ve Tasarım Kararları
-
-**RESTful Tasarım**
-HTTP metodları ve kaynak isimlendirmesi evrensel REST standartlarına uygun şekilde tasarlanmıştır.
-
-**DTO Katmanı**
-Veritabanı varlıkları (Entity) doğrudan dışa açılmaz. İstemci ile sunucu arasında yalnızca gerekli veriler `DTO` nesneleri aracılığıyla taşınır.
-
-**Global Hata Yönetimi**
-Tüm istisnai durumlar merkezi bir middleware katmanında yakalanır ve istemciye standartlaştırılmış JSON formatında iletilir.
-
-**Loglama**
-Kritik sistem hataları sunucu tarafında fiziksel bir `.txt` log dosyasına anlık olarak kaydedilir.
-
-**Defense in Depth**
-Veri doğrulama; Controller/DTO seviyesinde (Data Annotations) ve veritabanı kısıtlamaları olmak üzere iki katmanda uygulanmaktadır.
-
-<br>
+**Stack:** .NET 10.0 · C# · PostgreSQL · Entity Framework Core (Code-First) · Docker
 
 ---
 
 ## Kurulum
 
-Proje tamamen Dockerize edilmiştir. Sisteminizde .NET SDK veya PostgreSQL kurulu olmasına gerek yoktur.
+Projeyi çalıştırmak için yalnızca **Docker** gereklidir — .NET SDK veya PostgreSQL kurulumuna gerek yoktur.
+> Docker kurulu değilse → [docs.docker.com/get-docker](https://docs.docker.com/get-docker/)
 
-**Gereksinim:** Docker
 ```bash
-# Depoyu klonlayın
 git clone https://github.com/kullanici-adi/drone-fleet-api.git
 cd drone-fleet-api
-
-# Uygulamayı ve veritabanını başlatın
 docker compose up -d --build
 ```
 
-Başarılı kurulumun ardından API aşağıdaki adreste çalışmaya başlayacaktır:
-```
-http://localhost:8080
-```
-
-<br>
+API başarıyla ayağa kalktıktan sonra şu adresten erişilebilir:
+- **API Base URL:** `http://localhost:8080`
+- **Swagger UI:** `http://localhost:8080/swagger` (API dökümantasyonu ve test arayüzü)
 
 ---
 
@@ -85,16 +55,11 @@ http://localhost:8080
 
 **Base URL:** `http://localhost:8080`
 
-<br>
+---
 
 ### İHA Yönetimi
 
----
-
-#### Tüm İHA'ları Listele
-```
-GET /drones
-```
+#### `GET /drones` — Tüm İHA'ları Listele
 
 Kayıtlı tüm İHA'ları ve ilişkili uçuş kayıtlarını döner.
 
@@ -121,67 +86,45 @@ Kayıtlı tüm İHA'ları ve ilişkili uçuş kayıtlarını döner.
 
 ---
 
-#### İHA Detayı Getir
-```
-GET /drones/{id}
-```
+#### `GET /drones/{id}` — İHA Detayı
 
-Belirtilen `id`'ye sahip İHA'nın detaylı verisini döner.
-
-| Parametre | Tür | Konum | Açıklama |
-|---|---|---|---|
-| `id` | `int` | path | İHA'nın benzersiz kimlik numarası |
-
-**Yanıtlar**
+| Parametre | Tür | Açıklama |
+|---|---|---|
+| `id` | `int` | İHA'nın benzersiz kimlik numarası |
 
 | Kod | Açıklama |
 |---|---|
-| `200 OK` | `DroneResponseDTO` formatında tek bir nesne |
-| `404 Not Found` | Belirtilen ID'ye sahip kayıt bulunamadı |
-
-**Hata Yanıtı — `404 Not Found`**
-```json
-{
-  "mesaj": "1 numaralı İHA bulunamadı."
-}
-```
+| `200 OK` | `DroneResponseDTO` formatında tek nesne |
+| `404 Not Found` | Kayıt bulunamadı |
 
 ---
 
-#### Aktif İHA Özet Listesi
-```
-GET /drones/active-summary
-```
+#### `GET /drones/active-summary` — Aktif İHA Özeti
 
 Yalnızca `isActive: true` olan İHA'ların model adı ve IP adresini listeler.
 
 **Yanıt — `200 OK`**
 ```json
 [
-  {
-    "modelName": "Gözcü-X1",
-    "ipAddress": "192.168.1.15"
-  }
+  { "modelName": "Gözcü-X1", "ipAddress": "192.168.1.15" }
 ]
 ```
 
 ---
 
-#### Yeni İHA Kaydı
-```
-POST /drones
-```
+#### `POST /drones` — Yeni İHA Kaydı
 
-Sisteme yeni bir İHA kaydeder. Yeni kayıtlar `isActive: true` ve `isDeleted: false` varsayılan değerleriyle oluşturulur.
+Yeni kayıtlar `isActive: true` ve `isDeleted: false` varsayılan değerleriyle oluşturulur.
 
 **İstek Gövdesi**
 
 | Alan | Tür | Zorunlu | Açıklama |
 |---|---|---|---|
-| `modelName` | `string` | Evet | İHA'nın model adı |
-| `ipAddress` | `string` | Evet | İHA'ya atanan IP adresi |
-| `maxFlightTimeMinutes` | `int` | Evet | Maksimum uçuş süresi (dakika) |
-| `isActive` | `bool` | Hayır | Varsayılan: `true` |
+| `modelName` | `string` | ✓ | İHA'nın model adı |
+| `ipAddress` | `string` | ✓ | Atanan IP adresi |
+| `maxFlightTimeMinutes` | `int` | ✓ | Maksimum uçuş süresi (dakika) |
+| `isActive` | `bool` | — | Varsayılan: `true` |
+
 ```json
 {
   "modelName": "Atak-V2",
@@ -190,34 +133,21 @@ Sisteme yeni bir İHA kaydeder. Yeni kayıtlar `isActive: true` ve `isDeleted: f
 }
 ```
 
-**Yanıtlar**
-
 | Kod | Açıklama |
 |---|---|
-| `201 Created` | Eklenen kayıt `DroneResponseDTO` formatında döner |
-| `400 Bad Request` | Doğrulama hatası; zorunlu alan eksik veya geçersiz |
+| `201 Created` | Eklenen kayıt döner |
+| `400 Bad Request` | Zorunlu alan eksik veya geçersiz |
 
 ---
 
-#### İHA Bilgilerini Güncelle
-```
-PUT /drones/{id}
-```
+#### `PUT /drones/{id}` — İHA Güncelle
 
-Belirtilen İHA kaydını tam kapsamlı olarak günceller.
+| Parametre | Tür | Açıklama |
+|---|---|---|
+| `id` | `int` | Güncellenecek İHA'nın kimliği |
 
-| Parametre | Tür | Konum | Açıklama |
-|---|---|---|---|
-| `id` | `int` | path | Güncellenecek İHA'nın kimlik numarası |
+Tüm alanlar zorunludur (`isActive` dahil).
 
-**İstek Gövdesi**
-
-| Alan | Tür | Zorunlu | Açıklama |
-|---|---|---|---|
-| `modelName` | `string` | Evet | İHA'nın model adı |
-| `ipAddress` | `string` | Evet | İHA'ya atanan IP adresi |
-| `maxFlightTimeMinutes` | `int` | Evet | Maksimum uçuş süresi (dakika) |
-| `isActive` | `bool` | Evet | İHA'nın aktiflik durumu |
 ```json
 {
   "modelName": "Atak-V2 Güncel",
@@ -227,59 +157,36 @@ Belirtilen İHA kaydını tam kapsamlı olarak günceller.
 }
 ```
 
-**Yanıtlar**
-
 | Kod | Açıklama |
 |---|---|
 | `200 OK` | Güncellenmiş kayıt döner |
-| `404 Not Found` | Belirtilen ID'ye sahip kayıt bulunamadı |
+| `404 Not Found` | Kayıt bulunamadı |
 
 ---
 
-#### İHA Sil
-```
-DELETE /drones/{id}
-```
+#### `DELETE /drones/{id}` — İHA Sil (Soft Delete)
 
-Belirtilen İHA'yı pasif duruma getirir. Kayıt veritabanından kalıcı olarak silinmez; `isDeleted` bayrağı işaretlenir (Soft Delete).
-
-| Parametre | Tür | Konum | Açıklama |
-|---|---|---|---|
-| `id` | `int` | path | Silinecek İHA'nın kimlik numarası |
-
-**Yanıtlar**
+Kayıt fiziksel olarak silinmez; `isDeleted` bayrağı işaretlenir.
 
 | Kod | Açıklama |
 |---|---|
-| `204 No Content` | İşlem başarılı; yanıt gövdesi döndürülmez |
-| `404 Not Found` | Belirtilen ID'ye sahip kayıt bulunamadı |
-
-<br>
-
-### Uçuş Kaydı Yönetimi
+| `204 No Content` | İşlem başarılı |
+| `404 Not Found` | Kayıt bulunamadı |
 
 ---
 
-#### Uçuş Kaydı Ekle
-```
-POST /drones/{id}/flightlogs
-```
+### Uçuş Kaydı Yönetimi
 
-Belirtilen İHA'ya yeni bir uçuş kaydı ekler. Kayıt tarihi sunucu tarafından otomatik olarak atanır.
+#### `POST /drones/{id}/flightlogs` — Uçuş Kaydı Ekle
 
-| Parametre | Tür | Konum | Açıklama |
+Belirtilen İHA'ya yeni bir uçuş kaydı ekler. Kayıt tarihi sunucu tarafından atanır.
+
+| Alan | Tür | Zorunlu | Kısıtlama |
 |---|---|---|---|
-| `id` | `int` | path | Kaydın ekleneceği İHA'nın kimlik numarası |
+| `description` | `string` | ✓ | maks. 500 karakter |
 
-**İstek Gövdesi**
-
-| Alan | Tür | Zorunlu | Kısıtlama | Açıklama |
-|---|---|---|---|---|
-| `description` | `string` | Evet | maks. 500 karakter | Uçuş kaydının açıklaması |
 ```json
-{
-  "description": "Batarya %20 seviyesine düştüğü için otonom dönüş başlatıldı."
-}
+{ "description": "Batarya %20 seviyesine düştüğü için otonom dönüş başlatıldı." }
 ```
 
 **Yanıt — `200 OK`**
@@ -295,29 +202,24 @@ Belirtilen İHA'ya yeni bir uçuş kaydı ekler. Kayıt tarihi sunucu tarafında
 }
 ```
 
-**Yanıtlar**
-
 | Kod | Açıklama |
 |---|---|
-| `200 OK` | İşlem özeti ve eklenen kayıt döner |
-| `400 Bad Request` | Doğrulama hatası; açıklama zorunludur veya karakter sınırı aşıldı |
-| `404 Not Found` | Belirtilen ID'ye sahip İHA bulunamadı |
-
-<br>
+| `200 OK` | İşlem özeti ve eklenen kayıt |
+| `400 Bad Request` | Açıklama eksik veya karakter sınırı aşıldı |
+| `404 Not Found` | İHA bulunamadı |
 
 ---
 
 ## Hata Yanıtları
 
-Tüm hata durumları merkezi middleware tarafından yakalanır ve aşağıdaki standart formatta döndürülür.
+Tüm hata durumları merkezi middleware tarafından aşağıdaki standart formatta döndürülür:
+
 ```json
-{
-  "mesaj": "Hatanın açıklaması."
-}
+{ "mesaj": "Hatanın açıklaması." }
 ```
 
 | Kod | Durum | Açıklama |
 |---|---|---|
-| `400` | Bad Request | İstek gövdesi doğrulama kurallarını karşılamıyor |
+| `400` | Bad Request | Doğrulama kuralları karşılanmıyor |
 | `404` | Not Found | İstenen kaynak bulunamadı |
-| `500` | Internal Server Error | Sunucu taraflı beklenmeyen hata |
+| `500` | Internal Server Error | Beklenmeyen sunucu hatası |

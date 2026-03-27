@@ -3,7 +3,7 @@ using DroneFleetApi.DbContext;
 using Microsoft.EntityFrameworkCore;
 #endregion
 
-#region Configurations
+#region Configuration
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,11 +16,20 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 #endregion
 
 #region Middlewares
+
+// Swagger Middleware'ini Etkinleştir
+if (app.Environment.IsDevelopment() || true)
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.Use(async (context, next) =>
 {
