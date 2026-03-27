@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace DroneFleetApi.DTOs;
+namespace DroneFleetApi.DTOs.FlightLog;
 
 public class FlightLogDTO
 {
