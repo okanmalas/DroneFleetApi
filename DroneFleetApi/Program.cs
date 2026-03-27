@@ -1,6 +1,8 @@
 #region Imports
 using DroneFleetApi.DbContext;
+using DroneFleetApi.DTOs;
 using DroneFleetApi.Entities;
+using DroneFleetApi.Filters;
 using Microsoft.EntityFrameworkCore;
 #endregion
 
@@ -47,26 +49,63 @@ app.MapGet("/drones/{id}", async (int id, AppDbContext context) =>
     return Results.Ok(drone);
 }); //returns a drone with the given id
 
-app.MapPost("/drones", async (AppDbContext context, Drone drone) =>
+app.MapGet("/drones/active-summary", async (AppDbContext context) =>
 {
-    await context.Drones.AddAsync(drone);
-    drone.IsDeleted = false;
-    await context.SaveChangesAsync();
-    return Results.Created($"/drones/{drone.Id}", drone);
-}); //adds a drone to the database
+    var activeDroneList = await context.Drones
+        .Where(d => d.IsActive == true)
+        .Select(d => new 
+        { 
+            AracAdi = d.ModelName, 
+            BaglantiAdresi = d.IpAddress 
+        })
+        .ToListAsync();
 
-app.MapPut("/drones/{id}", async (int id, AppDbContext context, Drone guncelDrone) =>
+    return Results.Ok(activeDroneList);
+}); //returns a summary of active drones
+
+app.MapPost("/drones", async (AppDbContext context, DroneDTO dto) =>
+{
+    var newDrone = new Drone
+    {
+        ModelName = dto.ModelName,
+        IpAddress = dto.IpAddress,
+        MaxFlightTimeMinutes = dto.MaxFlightTimeMinutes,
+        IsActive = true,
+        IsDeleted = false
+    };
+    await context.Drones.AddAsync(newDrone);
+    await context.SaveChangesAsync();
+    return Results.Created($"/drones/{newDrone.Id}", newDrone);
+}).AddEndpointFilter<ValidationFilter<DroneDTO>>(); //adds a drone to the database
+
+app.MapPut("/drones/{id}", async (int id, AppDbContext context, DroneDTO dto) =>
 {
     var mevcutDrone = await context.Drones.FindAsync(id);
     if (mevcutDrone == null)
         return Results.NotFound(new { Mesaj = $"{id} numaralı İHA bulunamadı." });
-    mevcutDrone.ModelName = guncelDrone.ModelName;
-    mevcutDrone.IpAddress = guncelDrone.IpAddress;
-    mevcutDrone.MaxFlightTimeMinutes = guncelDrone.MaxFlightTimeMinutes;
-    mevcutDrone.IsActive = guncelDrone.IsActive;
+    mevcutDrone.ModelName = dto.ModelName;
+    mevcutDrone.IpAddress = dto.IpAddress;
+    mevcutDrone.MaxFlightTimeMinutes = dto.MaxFlightTimeMinutes;
+    mevcutDrone.IsActive = dto.IsActive;
     await context.SaveChangesAsync();
     return Results.Ok(mevcutDrone);
-}); //updates a drone with the given id
+}).AddEndpointFilter<ValidationFilter<DroneDTO>>(); //updates a drone with the given id
+
+app.MapPost("/drones/{id}/flightlogs", async (int id,FlightLogDTO dto, AppDbContext context) =>
+{
+    var drone = await context.Drones.FindAsync(id);
+    if (drone == null)
+        return Results.NotFound(new { Mesaj = $"{id} numaralı İHA bulunamadı, uçuş kaydı eklenemez!" });
+    var yeniLog = new FlightLog
+    {
+        DroneId = drone.Id,
+        LogDate = DateTime.UtcNow,
+        Description = dto.Description
+    };
+    await context.FlightLogs.AddAsync(yeniLog);
+    await context.SaveChangesAsync();
+    return Results.Ok("Flight Log Added to Drone: " + drone.Id);
+}).AddEndpointFilter<ValidationFilter<FlightLogDTO>>(); //adds a flight log to selected drone
 
 app.MapDelete("/drones/{id}", async (int id, AppDbContext context) =>
 {
@@ -78,18 +117,6 @@ app.MapDelete("/drones/{id}", async (int id, AppDbContext context) =>
     await context.SaveChangesAsync();
     return Results.Ok();
 }); //removes a drone with the given id
-
-app.MapPost("/drones/{id}/flightlogs", async (int id,FlightLog yeniLog, AppDbContext context) =>
-{
-    var drone = await context.Drones.FindAsync(id);
-    if (drone == null)
-        return Results.NotFound(new { Mesaj = $"{id} numaralı İHA bulunamadı, uçuş kaydı eklenemez!" });
-    yeniLog.DroneId = drone.Id;
-    yeniLog.LogDate = DateTime.UtcNow;
-    await context.FlightLogs.AddAsync(yeniLog);
-    await context.SaveChangesAsync();
-    return Results.Ok("Flight Log Added to Drone: " + drone.Id);
-}); //adds a flight log to selected drone
 
 #endregion
 

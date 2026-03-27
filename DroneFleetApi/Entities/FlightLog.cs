@@ -8,7 +8,7 @@ public class FlightLog
     public int Id { get; set; }
     public DateTime LogDate { get; set; } = DateTime.UtcNow;
     
-    [MaxLength(500, ErrorMessage = "Açıklama 300 karakterden uzun olamaz.")]
+    [MaxLength(500, ErrorMessage = "Açıklama 500 karakterden uzun olamaz.")]
     public string Description { get; set; }
     
     public int DroneId { get; set; } 
