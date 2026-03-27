@@ -32,8 +32,6 @@ Proje tamamen Dockerize edilmiştir; .NET SDK veya PostgreSQL kurulumu gerekmez.
 Ardından depoyu klonlayıp `compose.yaml` dosyasının bulunduğu dizinde aşağıdaki komutu çalıştırın:
 
 ```bash
-git clone https://github.com/kullanici-adi/drone-fleet-api.git
-cd drone-fleet-api
 docker compose up -d --build
 ```
 
