@@ -8,6 +8,10 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+});
 var app = builder.Build();
 #endregion
 
@@ -26,14 +30,20 @@ var app = builder.Build();
 
 app.MapGet("/drones", async (AppDbContext context) =>
 {
-    return await context.Drones.ToListAsync();
+    return await context.Drones
+        .Include(d => d.FlightLogs)
+        .ToListAsync();
 }); //returns all drones listed in the database
 
 app.MapGet("/drones/{id}", async (int id, AppDbContext context) =>
 {
-    var drone = await context.Drones.FindAsync(id);
+    var drone = await context.Drones
+        .Include(d => d.FlightLogs)
+        .FirstOrDefaultAsync(d => d.Id == id);
+    
     if (drone == null)
         return Results.NotFound(new { Mesaj = $"{id} numaralı İHA bulunamadı." });
+    
     return Results.Ok(drone);
 }); //returns a drone with the given id
 
@@ -68,6 +78,18 @@ app.MapDelete("/drones/{id}", async (int id, AppDbContext context) =>
     await context.SaveChangesAsync();
     return Results.Ok();
 }); //removes a drone with the given id
+
+app.MapPost("/drones/{id}/flightlogs", async (int id,FlightLog yeniLog, AppDbContext context) =>
+{
+    var drone = await context.Drones.FindAsync(id);
+    if (drone == null)
+        return Results.NotFound(new { Mesaj = $"{id} numaralı İHA bulunamadı, uçuş kaydı eklenemez!" });
+    yeniLog.DroneId = drone.Id;
+    yeniLog.LogDate = DateTime.UtcNow;
+    await context.FlightLogs.AddAsync(yeniLog);
+    await context.SaveChangesAsync();
+    return Results.Ok("Flight Log Added to Drone: " + drone.Id);
+}); //adds a flight log to selected drone
 
 #endregion
 
