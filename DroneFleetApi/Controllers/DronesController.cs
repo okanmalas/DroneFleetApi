@@ -12,11 +12,7 @@ namespace DroneFleetApi.Controllers;
 public class DronesController : ControllerBase
 {
     private readonly AppDbContext _context;
-    public DronesController(AppDbContext context)
-    {
-        _context = context;
-    }
-    
+    public DronesController(AppDbContext context) { _context = context; }
     #region http resquest "/drones"
     
     // BÜTÜN İHALARI GETİR (GET /drones)
