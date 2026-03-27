@@ -19,12 +19,26 @@ var app = builder.Build();
 
 #region Middlewares
 
-/*app.Use(async (context, next) =>
+app.Use(async (context, next) =>
 {
-    //todo maybe add middleware
-    await next();
-    //endtodo
-});*/
+    try
+    {
+        await next(); 
+    }
+    catch (Exception ex)
+    {
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+
+        var hataCevabi = new 
+        { 
+            Mesaj = "Sunucu tarafında beklenmeyen kritik bir hata oluştu.",
+            HataDetayi = ex.Message 
+        };
+
+        await context.Response.WriteAsJsonAsync(hataCevabi);
+    }
+}); //global exception handler
 
 #endregion
 
