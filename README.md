@@ -1,36 +1,39 @@
-# 🚁 Drone Fleet Management API
+# Drone Fleet Management API
 
-![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
+![.NET 10.0](https://img.shields.io/badge/.NET-10.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
 ![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white)
 
-Gelişmiş İHA (Drone) filolarını ve uçuş loglarını yönetmek için geliştirilmiş, yüksek performanslı ve tam teşekküllü **RESTful API** projesi. 
+> Gelişmiş İHA (Drone) filolarını ve bu araçlara ait uçuş kayıtlarını yönetmek için tasarlanmış, veri bütünlüğünü ve güvenliğini ön planda tutan sunucu taraflı (server-side) bir uygulamadır.
 
-Sistem; otonom uçuş verilerini, donanım konfigürasyonlarını (5.1 GHz - 5.9 GHz haberleşme modülleri vb.) ve anlık uçuş kayıtlarını güvenli bir şekilde merkezi veritabanında saklamak üzere tasarlanmıştır.
+## Projenin Amacı ve Kapsamı
 
-## ✨ Temel Özellikler (Features)
+Bu proje, modern backend mimarilerini, yazılım mühendisliği prensiplerini ve güncel endüstri standartlarını öğrenmek/uygulamak amacıyla geliştirilmiştir. 
 
-- **RESTful Mimari:** Evrensel standartlara uygun Controller yapısı ve endpoint tasarımı.
-- **DTO (Data Transfer Object) Katmanı:** İstemci ile veritabanı arasında güvenli veri transferi. Veri sızıntılarını (Entity leakage) engeller.
-- **Global Error Handling & Logging:** Beklenmeyen sistem hatalarını havada yakalar, API'nin çökmesini engeller ve tüm kriz anlarını fiziksel `.txt` formatında bir "Kara Kutu" (Log) dosyasına kaydeder.
-- **Eager Loading (Include):** 1-N (Bire-Çok) ilişkili tabloları (İHA ve Uçuş Kayıtları) yüksek performanslı LINQ sorgularıyla tek seferde getirir.
-- **Defense in Depth:** Hem DataAnnotations (Filtreleme) hem de Veritabanı (EF Core) seviyesinde katmanlı veri doğrulama kilitleri.
+Uygulama aktif olarak herhangi bir kullanıcı arayüzüne (Frontend) bağlı değildir. Temel odak noktası; güvenli veri transferi, katmanlı mimari yaklaşımı, asenkron programlama ve ilişkisel veritabanı yönetiminin API Controller standartları üzerinden kusursuz bir şekilde kurgulanmasıdır.
 
-## 🛠️ Kullanılan Teknolojiler
+## Kullanılan Teknolojiler ve Mimari Standartlar
 
-- **Backend:** C# & ASP.NET Core Web API (Controllers)
-- **ORM:** Entity Framework Core (Code-First Approach)
-- **Veritabanı:** PostgreSQL
-- **Konteynerleştirme:** Docker & Docker Compose
+Proje geliştirilirken aşağıdaki teknolojiler ve endüstriyel standartlar temel alınmıştır:
 
-## 🚀 Kurulum & Çalıştırma (Getting Started)
+* **Framework & Dil:** .NET 10.0 SDK, C#
+* **Veritabanı & ORM:** PostgreSQL, Entity Framework Core (Code-First)
+* **Konteynerleştirme:** Docker, Docker Compose
+* **Mimari Yaklaşımlar:**
+  * **RESTful Tasarım:** API uç noktaları evrensel isimlendirme ve HTTP metot standartlarına uygun olarak tasarlanmıştır.
+  * **DTO (Data Transfer Object) Katmanı:** Veritabanı varlıklarının (Entity) dış dünyaya sızması engellenmiş, istemci ve sunucu arasında sadece gerekli verilerin taşınması sağlanmıştır.
+  * **Global Hata Yönetimi (Error Handling):** Uygulama genelinde oluşabilecek istisnai durumlar (exceptions) merkezi bir ara katmanda (middleware) yakalanarak istemciye standartlaştırılmış JSON formatında döndürülmektedir.
+  * **Loglama:** Kritik sistem hataları izole edilerek sunucu tarafında fiziksel bir log dosyasına (`.txt` formatında) anlık olarak kaydedilmektedir.
+  * **Defense in Depth:** Veri doğrulama işlemleri hem Controller/DTO seviyesinde (Data Annotations) hem de veritabanı seviyesinde katmanlı olarak uygulanmıştır.
 
-Proje tamamen Dockerize edilmiştir. Bilgisayarınızda .NET SDK veya PostgreSQL kurulu olmasına gerek yoktur.
+## Kurulum ve Çalıştırma
 
-1. Projeyi bilgisayarınıza klonlayın.
-2. Terminali açarak projenin ana dizinine ( `compose.yaml` dosyasının olduğu yere) gidin.
-3. Aşağıdaki sihirli komutu çalıştırın:
+Proje tamamen Dockerize edilmiştir. Uygulamayı ayağa kaldırmak için bilgisayarınızda .NET SDK veya PostgreSQL kurulu olmasına gerek yoktur; yalnızca Docker'ın çalışır durumda olması yeterlidir.
+
+1. Proje dizinini bilgisayarınıza klonlayın.
+2. Terminal üzerinden projenin ana dizinine (`compose.yaml` dosyasının bulunduğu konuma) geçiş yapın.
+3. Uygulamayı ve veritabanını izole bir ortamda başlatmak için aşağıdaki komutu çalıştırın:
 
 ```bash
 docker compose up -d --build
