@@ -5,63 +5,65 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org)
 [![Docker](https://img.shields.io/badge/Docker-2CA5E0?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com)
 
-İHA (İnsansız Hava Aracı) filolarının ve bu araçlara ait uçuş kayıtlarının merkezi bir sistem üzerinden yönetilmesi için geliştirilmiş bir RESTful API uygulamasıdır. Veri bütünlüğü, katmanlı mimari ve asenkron programlama prensipleri temel alınarak kurgulanmıştır.
+İHA filolarının ve uçuş kayıtlarının merkezi olarak yönetilmesi için geliştirilmiş RESTful API. Veri bütünlüğü, katmanlı mimari ve asenkron programlama prensipleri temel alınmıştır.
 
 ---
 
-## Mimari ve Teknolojiler
-
-Uygulama, modern backend standartlarına uygun olarak aşağıdaki bileşenler ve yaklaşımlar üzerine inşa edilmiştir:
+## Mimari
 
 | Kategori | Teknoloji / Yaklaşım |
 |---|---|
-| **Framework** | .NET 10.0 SDK, C# |
-| **Veritabanı** | PostgreSQL, Entity Framework Core (Code-First) |
-| **Konteyner** | Docker, Docker Compose |
-| **Mimari Standart** | RESTful, DTO (Data Transfer Object) Katmanı |
-| **Hata Yönetimi** | Merkezi Global Exception Handling Middleware |
-| **Güvenlik** | Defense in Depth (Data Annotations & DB Constraints) |
-| **Silme Politikası** | Soft Delete (isDeleted bayrağı ile kayıt koruma) |
+| **Framework** | .NET 10.0, C# |
+| **Veritabanı** | PostgreSQL · Entity Framework Core (Code-First) |
+| **Konteyner** | Docker · Docker Compose |
+| **Mimari** | RESTful · DTO Katmanı |
+| **Hata Yönetimi** | Global Exception Handling Middleware |
+| **Güvenlik** | Data Annotations + Veritabanı Kısıtlamaları |
+| **Silme Politikası** | Soft Delete (`isDeleted` bayrağı) |
 
 ---
 
-## Kurulum ve Çalıştırma
+## Kurulum
 
-Proje tamamen Dockerize edilmiştir. Yerel makinenizde .NET veya PostgreSQL kurulu olmasına gerek yoktur.
+Proje tamamen Dockerize edilmiştir; .NET SDK veya PostgreSQL kurulumu gerekmez.
 
-1. Depoyu yerel makinenize klonlayın.
-2. Terminal üzerinden `compose.yaml` dosyasının bulunduğu ana dizine geçin.
-3. Aşağıdaki komutu çalıştırarak servisleri başlatın:
+**Docker kurulu değilse:** [docs.docker.com/get-docker](https://docs.docker.com/get-docker/) adresinden işletim sisteminize uygun paketi indirin ve kurulumu tamamlayın.
+
+Ardından depoyu klonlayıp `compose.yaml` dosyasının bulunduğu dizinde aşağıdaki komutu çalıştırın:
 
 ```bash
+git clone https://github.com/kullanici-adi/drone-fleet-api.git
+cd drone-fleet-api
 docker compose up -d --build
 ```
 
 ---
 
-## API Erişimi ve Dökümantasyon
+## Erişim
 
-Servisler ayağa kalktıktan sonra aşağıdaki adreslerden erişim sağlanabilir:
+Servisler ayağa kalktıktan sonra:
 
-- **API Base URL:** `http://localhost:8080`
-- **Swagger UI (Dökümantasyon):** `http://localhost:8080/swagger`
+| Kaynak | Adres |
+|---|---|
+| API Base URL | `http://localhost:8080` |
+| Swagger UI | `http://localhost:8080/swagger` |
 
-> **Not:** API uç noktaları, parametreler, şemalar ve test arayüzü için Swagger UI dökümantasyonunu kullanınız. Manuel bir dökümantasyon tutulmamaktadır; tüm güncel tanımlamalar Swagger üzerinden otomatik olarak sunulur.
-
----
-
-## Teknik Kısıtlamalar ve Validasyonlar
-
-Veri tutarlılığını sağlamak amacıyla uygulanan temel kurallar:
-
-- **İHA Model Adı:** Zorunludur ve maksimum 50 karakter sınırına sahiptir.
-- **IP Adresi:** Zorunludur ve IPv4 formatına uygun maksimum 15 karakter olmalıdır.
-- **Uçuş Süresi:** Operasyonel limitler gereği 10 ile 3000 dakika arasında tanımlanmalıdır.
-- **Uçuş Kaydı:** Açıklama alanı detaylı raporlama için maksimum 500 karakter ile sınırlandırılmıştır.
-- **Loglama:** Kritik sistem hataları sunucu tarafında `/Logs` dizini altındaki `.txt` dosyalarına otomatik olarak kaydedilir.
+Tüm uç nokta tanımları, parametre şemaları ve etkileşimli test arayüzü Swagger UI üzerinden sunulmaktadır.
 
 ---
 
-## Lisans ve Kullanım
+## Validasyon Kuralları
 
-Bu proje eğitim ve standart geliştirme pratiklerini uygulama amacıyla hazırlanmıştır. Ticari kullanım öncesi operasyonel güvenlik gereksinimlerinin gözden geçirilmesi önerilir.
+| Alan | Kural |
+|---|---|
+| İHA Model Adı | Zorunlu · maks. 50 karakter |
+| IP Adresi | Zorunlu · IPv4 formatı · maks. 15 karakter |
+| Uçuş Süresi | 10 – 3000 dakika aralığı |
+| Uçuş Kaydı Açıklaması | maks. 500 karakter |
+| Sistem Logları | Kritik hatalar `/Logs` dizinine `.txt` olarak yazılır |
+
+---
+
+## Lisans
+
+Eğitim ve standart geliştirme pratiklerini uygulamak amacıyla hazırlanmıştır. Ticari kullanım öncesinde operasyonel güvenlik gereksinimlerinin gözden geçirilmesi önerilir.
