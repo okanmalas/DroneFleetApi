@@ -1,223 +1,69 @@
 # Drone Fleet Management API
 
-![.NET 10.0](https://img.shields.io/badge/.NET-10.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
-![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white)
+Bu proje, İHA (İnsansız Hava Aracı) filolarının ve uçuş kayıtlarının merkezi bir sistem üzerinden yönetilmesi amacıyla geliştirilmiş bir RESTful API uygulamasıdır. Veri bütünlüğü, güvenli veri transferi ve katmanlı mimari prensipleri temel alınarak kurgulanmıştır.
 
-Gelişmiş İHA (İnsansız Hava Aracı) filolarını ve bu araçlara ait uçuş kayıtlarını yönetmek için tasarlanmış, veri bütünlüğünü ve güvenliğini ön planda tutan sunucu taraflı (server-side) bir uygulamadır.
+## Teknolojiler ve Standartlar
 
----
-
-## İçindekiler
-
-- [Projenin Amacı ve Kapsamı](#projenin-amacı-ve-kapsamı)
-- [Teknolojiler ve Mimari Standartlar](#teknolojiler-ve-mimari-standartlar)
-- [Kurulum ve Çalıştırma](#kurulum-ve-çalıştırma)
-- [API Dökümantasyonu](#api-dökümantasyonu)
-  - [İHA Yönetimi](#1-i̇ha-yönetimi)
-  - [Uçuş Kayıt Yönetimi](#2-uçuş-kayıt-flight-log-yönetimi)
-
----
-
-## Projenin Amacı ve Kapsamı
-
-Bu proje, modern backend mimarilerini, yazılım mühendisliği prensiplerini ve güncel endüstri standartlarını öğrenmek ve uygulamak amacıyla geliştirilmiştir.
-
-Uygulama aktif olarak herhangi bir kullanıcı arayüzüne (Frontend) bağlı değildir. Temel odak noktası; güvenli veri transferi, katmanlı mimari yaklaşımı, asenkron programlama ve ilişkisel veritabanı yönetiminin API Controller standartları üzerinden kurgulanmasıdır.
-
----
-
-## Teknolojiler ve Mimari Standartlar
-
-| Kategori | Teknoloji / Yaklaşım |
-|---|---|
-| **Framework & Dil** | .NET 10.0 SDK, C# |
-| **Veritabanı & ORM** | PostgreSQL, Entity Framework Core (Code-First) |
-| **Konteynerleştirme** | Docker, Docker Compose |
-
-**Uygulanan Mimari Prensipler:**
-
-**RESTful Tasarım** — API uç noktaları evrensel isimlendirme ve HTTP metot standartlarına uygun olarak tasarlanmıştır.
-
-**DTO (Data Transfer Object) Katmanı** — Veritabanı varlıklarının (Entity) dış dünyaya sızması engellenmiş; istemci ve sunucu arasında yalnızca gerekli verilerin taşınması sağlanmıştır.
-
-**Global Hata Yönetimi** — Uygulama genelinde oluşabilecek istisnai durumlar merkezi bir ara katmanda (middleware) yakalanarak istemciye standartlaştırılmış JSON formatında iletilmektedir.
-
-**Loglama** — Kritik sistem hataları izole edilerek sunucu tarafında fiziksel bir log dosyasına (`.txt`) anlık olarak kaydedilmektedir.
-
-**Defense in Depth** — Veri doğrulama işlemleri hem Controller/DTO seviyesinde (Data Annotations) hem de veritabanı seviyesinde katmanlı olarak uygulanmıştır.
-
----
+- **Framework:** .NET 10.0
+- **Veritabanı & ORM:** PostgreSQL, Entity Framework Core (Code-First)
+- **Konteynerleştirme:** Docker, Docker Compose
+- **Mimari Yaklaşım:** DTO (Data Transfer Object), Global Error Handling, Soft Delete
 
 ## Kurulum ve Çalıştırma
 
-Proje tamamen Dockerize edilmiştir. Uygulamayı çalıştırmak için sisteminizde .NET SDK veya PostgreSQL kurulu olmasına gerek yoktur; yalnızca Docker'ın çalışır durumda olması yeterlidir.
+Projenin çalıştırılması için sistemde yalnızca Docker'ın kurulu olması yeterlidir.
 
-**1.** Depoyu yerel makinenize klonlayın.
-
-**2.** Terminal üzerinden projenin ana dizinine (`compose.yaml` dosyasının bulunduğu konuma) geçiş yapın.
-
-**3.** Aşağıdaki komutu çalıştırarak uygulamayı ve veritabanını izole bir ortamda başlatın:
+1. Depoyu klonlayın.
+2. Ana dizinde aşağıdaki komutu çalıştırın:
 ```bash
 docker compose up -d --build
 ```
+API, `http://localhost:8080` adresinde erişime açılacaktır.
 
-İşlem tamamlandığında API, `http://localhost:8080` adresinde istekleri kabul etmeye hazır olacaktır.
+## Teknik Kısıtlamalar ve Validasyonlar
 
----
+Sistemde veri tutarlılığını sağlamak için aşağıdaki kurallar uygulanmaktadır:
 
-## API Dökümantasyonu
+- **Model Adı:** Zorunludur ve maksimum 50 karakter olabilir.
+- **IP Adresi:** Zorunludur ve maksimum 15 karakter (IPv4 formatı) olabilir.
+- **Uçuş Süresi:** Minimum 10, maksimum 3000 dakika arasında olmalıdır.
+- **Silme İşlemi:** Veriler veritabanından kalıcı olarak silinmez, `isDeleted` bayrağı ile işaretlenerek sistemden gizlenir (Soft Delete).
+- **Loglama:** Uçuş kayıtlarında açıklama alanı maksimum 500 karakter ile sınırlandırılmıştır.
 
-**Base URL:** `http://localhost:8080`
-
----
+## API Uç Noktaları
 
 ### 1. İHA Yönetimi
 
-#### Tüm İHA'ları Getir
+#### Tüm İHA'ları Listele
+`GET /drones`
+- Kayıtlı tüm İHA'ları ve ilişkili uçuş kayıtlarını listeler.
 
-Sistemde kayıtlı olan tüm İHA'ları ve bunlara ait uçuş loglarını listeler.
-```
-GET /drones
-```
-
-**Başarılı Yanıt — `200 OK`**
-```json
-[
-  {
-    "id": 1,
-    "modelName": "Gözcü-X1",
-    "ipAddress": "192.168.1.15",
-    "maxFlightTimeMinutes": 120,
-    "isActive": true,
-    "flightLogs": [
-      {
-        "id": 1,
-        "logDate": "2026-03-28T09:00:00Z",
-        "description": "Rutin sınır devriyesi tamamlandı.",
-        "droneId": 1
-      }
-    ]
-  }
-]
-```
-
----
-
-#### Tek Bir İHA Getir
-
-Belirtilen `id`'ye sahip İHA'nın detaylı verisini döner.
-```
-GET /drones/{id}
-```
-
-| Durum | Kod | Açıklama |
-|---|---|---|
-| Başarılı | `200 OK` | `DroneResponseDTO` formatında tek bir nesne döner. |
-| Bulunamadı | `404 Not Found` | `{"mesaj": "1 numaralı İHA bulunamadı."}` |
-
----
+#### İHA Detayı Getir
+`GET /drones/{id}`
+- Belirtilen ID'ye sahip İHA'nın detaylı verisini döner.
+- Bulunamazsa `404 Not Found` yanıtı döner.
 
 #### Aktif İHA Özet Listesi
+`GET /drones/active-summary`
+- Sadece `isActive: true` olan İHA'ların model adı ve IP adresini listeler.
 
-Yalnızca sistemde aktif olarak işaretlenmiş İHA'ların özet bilgisini döner.
-```
-GET /drones/active-summary
-```
-
-**Başarılı Yanıt — `200 OK`**
-```json
-[
-  {
-    "modelName": "Gözcü-X1",
-    "ipAddress": "192.168.1.15"
-  }
-]
-```
-
----
-
-#### Yeni İHA Ekle
-
-Sisteme yeni bir İHA kaydeder. Yeni kayıtlar varsayılan olarak `isActive: true` ve `isDeleted: false` olarak işaretlenir.
-```
-POST /drones
-```
-
-**İstek Gövdesi**
-```json
-{
-  "modelName": "Atak-V2",
-  "ipAddress": "192.168.1.50",
-  "maxFlightTimeMinutes": 240
-}
-```
-
-| Durum | Kod | Açıklama |
-|---|---|---|
-| Başarılı | `201 Created` | Eklenen veri `DroneResponseDTO` formatında döner. |
-| Doğrulama Hatası | `400 Bad Request` | Zorunlu alanlar eksik veya hatalıysa döner. |
-
----
+#### Yeni İHA Kaydı
+`POST /drones`
+- Gövde Parametreleri: `modelName` (string), `ipAddress` (string), `maxFlightTimeMinutes` (int), `isActive` (bool).
+- Başarılı işlem sonrası `201 Created` kodu ile eklenen veri döner.
 
 #### İHA Bilgilerini Güncelle
+`PUT /drones/{id}`
+- Belirtilen ID'ye sahip İHA'nın tüm bilgilerini günceller.
 
-Belirtilen İHA'nın mevcut verilerini tam kapsamlı olarak günceller.
-```
-PUT /drones/{id}
-```
+#### İHA Sil
+`DELETE /drones/{id}`
+- Belirtilen İHA'yı pasif duruma getirir. Yanıt olarak `204 No Content` döner.
 
-**İstek Gövdesi**
-```json
-{
-  "modelName": "Atak-V2 Güncel",
-  "ipAddress": "192.168.1.55",
-  "maxFlightTimeMinutes": 260,
-  "isActive": false
-}
-```
-
-**Başarılı Yanıt — `200 OK`:** Güncellenmiş veri döner.
-
----
-
-#### İHA Sil (Soft Delete)
-
-Belirtilen İHA'yı sistemden pasif duruma çeker. Kayıt kalıcı olarak silinmez; `isDeleted` bayrağı işaretlenir.
-```
-DELETE /drones/{id}
-```
-
-**Başarılı Yanıt — `204 No Content`:** Gövdesiz yanıt döner.
-
----
-
-### 2. Uçuş Kayıt (Flight Log) Yönetimi
+### 2. Uçuş Kaydı Yönetimi
 
 #### Uçuş Kaydı Ekle
-
-Belirtilen `id`'ye sahip İHA için yeni bir uçuş kayıt raporu oluşturur. Kayıt tarihi sunucu tarafından otomatik olarak atanır.
-```
-POST /drones/{id}/flightlogs
-```
-
-**İstek Gövdesi**
-```json
-{
-  "description": "Batarya %20 seviyesine düştüğü için otonom dönüş başlatıldı."
-}
-```
-
-**Başarılı Yanıt — `200 OK`**
-```json
-{
-  "mesaj": "Flight Log Added to Drone: 1",
-  "data": {
-    "id": 2,
-    "logDate": "2026-03-28T14:30:00Z",
-    "description": "Batarya %20 seviyesine düştüğü için otonom dönüş başlatıldı.",
-    "droneId": 1
-  }
-}
-```
+`POST /drones/{id}/flightlogs`
+- Gövde Parametresi: `description` (string, max 500 karakter).
+- Kayıt tarihi sunucu tarafından otomatik olarak atanır.
+- Başarılı işlem sonrası `200 OK` kodu ile işlem özeti ve veri döner.
