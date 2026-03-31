@@ -16,9 +16,10 @@
 | **Framework** | .NET 10.0, C# |
 | **Veritabanı** | PostgreSQL · Entity Framework Core (Code-First) |
 | **Konteyner** | Docker · Docker Compose |
-| **Mimari** | RESTful · DTO Katmanı |
+| **Mimari** | RESTful · DTO Katmanı · AutoMapper (Nesne Eşleştirme) |
 | **Hata Yönetimi** | Global Exception Handling Middleware |
-| **Güvenlik** | Data Annotations + Veritabanı Kısıtlamaları |
+| **Güvenlik** | JWT (JSON Web Token) · Rol Bazlı Yetkilendirme (Admin) |
+| **Performans** | Sayfalama (Pagination) · Dinamik Filtreleme (IQueryable) |
 | **Silme Politikası** | Soft Delete (`isDeleted` bayrağı) |
 
 ---
