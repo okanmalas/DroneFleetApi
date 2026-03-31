@@ -1,7 +1,9 @@
+using AutoMapper;
 using DroneFleetApi.DbContext;
 using DroneFleetApi.DTOs.Drone;
 using DroneFleetApi.DTOs.FlightLog;
 using DroneFleetApi.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,37 +14,45 @@ namespace DroneFleetApi.Controllers;
 public class DronesController : ControllerBase
 {
     private readonly AppDbContext _context;
-    public DronesController(AppDbContext context) { _context = context; }
+    private readonly IMapper _mapper;
+    public DronesController(AppDbContext context, IMapper mapper) 
+    {
+        _context = context;
+        _mapper = mapper;
+    }
+    
     #region http resquest "/drones"
     
-    // BÜTÜN İHALARI GETİR (GET /drones)
+    // BÜTÜN İHALARI GETİR (Filtreleme + Sayfalama)
     [HttpGet]
-    public async Task<IActionResult> GetAllDrones()
+    public async Task<IActionResult> GetAllDrones(
+        [FromQuery] int page = 1, 
+        [FromQuery] int pageSize = 10,
+        [FromQuery] bool? isActive = null, 
+        [FromQuery] string? search = null) 
     {
-        var droneListesi = await _context.Drones
-            .Select(d => new DroneResponseDTO
-            {
-                Id = d.Id,
-                ModelName = d.ModelName,
-                IpAddress = d.IpAddress,
-                MaxFlightTimeMinutes = d.MaxFlightTimeMinutes,
-                IsActive = d.IsActive,
-                FlightLogs = d.FlightLogs.Select(f => new FlightLogResponseDTO
-                {
-                    Id = f.Id,
-                    LogDate = f.LogDate,
-                    Description = f.Description,
-                    DroneId = f.DroneId
-                }).ToList()
-            })
-            .ToListAsync();
+        var query = _context.Drones.Include(d => d.FlightLogs).AsQueryable();
+
+        if (isActive.HasValue)
+            query = query.Where(d => d.IsActive == isActive.Value);
+
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(d => d.ModelName.ToLower().Contains(search.ToLower())); // %search% araması yapar
+
+        var drones = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(); 
+
+        var droneListesi = _mapper.Map<List<DroneResponseDTO>>(drones); //ham liste (drones) -> DTO liste (droneListesi)
 
         return Ok(droneListesi);
     }
-    
+
     // 1. TEK BİR İHA GETİR (GET /drones/{id})
     [HttpGet("{id}")] 
-    public async Task<IActionResult> GetDroneById(int id)
+    public async Task<IActionResult> GetDroneById(
+        int id)
     {
         var drone = await _context.Drones
             .Include(d => d.FlightLogs)
@@ -51,59 +61,31 @@ public class DronesController : ControllerBase
         if (drone == null)
             return NotFound(new { Mesaj = $"{id} numaralı İHA bulunamadı." });
 
-        var response = new DroneResponseDTO
-        {
-            Id = drone.Id,
-            ModelName = drone.ModelName,
-            IpAddress = drone.IpAddress,
-            MaxFlightTimeMinutes = drone.MaxFlightTimeMinutes,
-            IsActive = drone.IsActive,
-            FlightLogs = drone.FlightLogs.Select(f => new FlightLogResponseDTO
-            {
-                Id = f.Id,
-                LogDate = f.LogDate,
-                Description = f.Description,
-                DroneId = f.DroneId
-            }).ToList()
-        };
+        var response = _mapper.Map<DroneResponseDTO>(drone);
         
         return Ok(response);
     }
 
     // 2. YENİ İHA EKLE (POST /drones)
+    [Authorize]
     [HttpPost]
-    public async Task<IActionResult> CreateDrone([FromBody] DroneDTO dto) // [FromBody]: Veriyi URL'den değil, JSON gövdesinden al demek
+    public async Task<IActionResult> CreateDrone(
+        [FromBody] DroneDTO dto) // [FromBody]: Veriyi URL'den değil, JSON gövdesinden al demek
     {
-        var newDrone = new Drone
-        {
-            ModelName = dto.ModelName,
-            IpAddress = dto.IpAddress,
-            MaxFlightTimeMinutes = dto.MaxFlightTimeMinutes,
-            IsActive = true,
-            IsDeleted = false
-        };
-        
+        var newDrone = _mapper.Map<Drone>(dto);
         await _context.Drones.AddAsync(newDrone);
         await _context.SaveChangesAsync();
-
-        var response = new DroneResponseDTO
-        {
-            Id = newDrone.Id,
-            ModelName = newDrone.ModelName,
-            IpAddress = newDrone.IpAddress,
-            MaxFlightTimeMinutes = newDrone.MaxFlightTimeMinutes,
-            IsActive = newDrone.IsActive,
-            FlightLogs = new List<FlightLogResponseDTO>()
-        };
+        var response = _mapper.Map<DroneResponseDTO>(newDrone);
         
-        // Minimal API'deki Results.Created() yerine bunu kullanıyoruz.
-        // Bizi direkt olarak yukarıdaki GetDroneById metoduna yönlendirir.
         return CreatedAtAction(nameof(GetDroneById), new { id = newDrone.Id }, response); 
     }
 
     // 3. İHA GÜNCELLE (PUT /drones/{id})
+    [Authorize]
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateDrone(int id, [FromBody] DroneDTO dto)
+    public async Task<IActionResult> UpdateDrone(
+        int id, 
+        [FromBody] DroneDTO dto)
     {
         var mevcutDrone = await _context.Drones
             .Include(d => d.FlightLogs)
@@ -112,35 +94,20 @@ public class DronesController : ControllerBase
         if (mevcutDrone == null)
             return NotFound(new { Mesaj = $"{id} numaralı İHA bulunamadı." });
 
-        mevcutDrone.ModelName = dto.ModelName;
-        mevcutDrone.IpAddress = dto.IpAddress;
-        mevcutDrone.MaxFlightTimeMinutes = dto.MaxFlightTimeMinutes;
-        mevcutDrone.IsActive = dto.IsActive;
+        mevcutDrone = _mapper.Map(dto, mevcutDrone);
         
         await _context.SaveChangesAsync();
 
-        var response = new DroneResponseDTO
-        {
-            Id = mevcutDrone.Id,
-            ModelName = mevcutDrone.ModelName,
-            IpAddress = mevcutDrone.IpAddress,
-            MaxFlightTimeMinutes = mevcutDrone.MaxFlightTimeMinutes,
-            IsActive = mevcutDrone.IsActive,
-            FlightLogs = mevcutDrone.FlightLogs.Select(f => new FlightLogResponseDTO
-            {
-                Id = f.Id,
-                LogDate = f.LogDate,
-                Description = f.Description,
-                DroneId = f.DroneId
-            }).ToList()
-        };
+        var response = _mapper.Map<DroneResponseDTO>(mevcutDrone);
 
         return Ok(response);
     }
 
     // 4. İHA SİL (DELETE /drones/{id})
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteDrone(int id)
+    public async Task<IActionResult> DeleteDrone(
+        int id)
     {
         var drone = await _context.Drones.FindAsync(id);
         
@@ -154,49 +121,23 @@ public class DronesController : ControllerBase
         // Sektör Standardı: Silme işlemi başarılıysa ekrana veri dönülmez, sadece 204 (No Content) durum kodu yollanır.
         return NoContent(); 
     }
-    
-    // 5. AKTİF İHA'LARIN ÖZETİ (GET /drones/active-summary)
-    [HttpGet("active-summary")] 
-    public async Task<IActionResult> GetActiveDronesSummary()
-    {
-        var activeDroneList = await _context.Drones
-            .Where(d => d.IsActive == true)
-            .Select(d => new DroneSummaryDTO
-            { 
-                ModelName = d.ModelName, 
-                IpAddress = d.IpAddress 
-            })
-            .ToListAsync();
 
-        return Ok(activeDroneList);
-    }
-
-    // 6. UÇUŞ KAYDI EKLEME (POST /drones/{id}/flightlogs)
+    // 5. UÇUŞ KAYDI EKLEME (POST /drones/{id}/flightlogs)
+    [Authorize(Roles = "Admin")]
     [HttpPost("{id}/flightlogs")]
-    public async Task<IActionResult> AddFlightLog(int id, [FromBody] FlightLogDTO dto)
+    public async Task<IActionResult> AddFlightLog(
+        int id,
+        [FromBody] FlightLogDTO dto)
     {
         var drone = await _context.Drones.FindAsync(id);
         
         if (drone == null)
             return NotFound(new { Mesaj = $"{id} numaralı İHA bulunamadı, uçuş kaydı eklenemez!" });
         
-        var yeniLog = new FlightLog
-        {
-            DroneId = drone.Id,
-            LogDate = DateTime.UtcNow,
-            Description = dto.Description
-        };
-        
+        var yeniLog = _mapper.Map<FlightLog>(dto);
         await _context.FlightLogs.AddAsync(yeniLog);
         await _context.SaveChangesAsync();
-
-        var response = new FlightLogResponseDTO
-        {
-            Id = yeniLog.Id,
-            LogDate = yeniLog.LogDate,
-            Description = yeniLog.Description,
-            DroneId = yeniLog.DroneId
-        };
+        var response = _mapper.Map<FlightLogResponseDTO>(yeniLog);
         
         return Ok(new { Mesaj = $"Flight Log Added to Drone: {drone.Id}", Data = response });
     }
