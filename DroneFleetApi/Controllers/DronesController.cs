@@ -135,6 +135,7 @@ public class DronesController : ControllerBase
             return NotFound(new { Mesaj = $"{id} numaralı İHA bulunamadı, uçuş kaydı eklenemez!" });
         
         var yeniLog = _mapper.Map<FlightLog>(dto);
+        yeniLog.DroneId = id;
         await _context.FlightLogs.AddAsync(yeniLog);
         await _context.SaveChangesAsync();
         var response = _mapper.Map<FlightLogResponseDTO>(yeniLog);
